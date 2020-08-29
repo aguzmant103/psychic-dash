@@ -2,6 +2,7 @@
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import plotly.graph_objs as go
 import pandas as pd
 
 
@@ -24,6 +25,8 @@ colors = {
 
 #Loading my data in a dataframe
 df = pd.read_csv('https://gist.githubusercontent.com/chriddyp/c78bf172206ce24f77d6363a2d754b59/raw')
+df2 = pd.read_csv('https://gist.githubusercontent.com/chriddyp/5d1ea79569ed194d432e56108a04d188/raw/'+
+    'a9f9e8076b837d541398e999dcbac2b2826a81f8/gdp-life-exp-2007.csv')
 #Defines function to generate a Dash table from a Pandas' dataframe
 def generate_table(dataframe, max_rows=10):
     return html.Table([
@@ -103,7 +106,33 @@ app.layout = html.Div([
             2010: '2010',
             2015: '2015',
             2020: '2020'}),
-    html.Div(id='slider-output-container')
+    html.Div(id='slider-output-container'),
+    dcc.Graph(
+        id='life-exp-vs-gdp',
+        figure={
+            'data': [
+                go.Scatter(
+                    x=df2[df2['continent'] == i]['gdp per capita'],
+                    y=df2[df2['continent'] == i]['life expectancy'],
+                    text=df2[df2['continent'] == i]['country'],
+                    mode='markers',
+                    opacity=0.8,
+                    marker={
+                        'size': 15,
+                        'line': {'width': 0.5, 'color': 'white'}
+                    },
+                    name=i
+                ) for i in df2.continent.unique()
+            ],
+            'layout': go.Layout(
+                xaxis={'type': 'log', 'title': 'GDP Per Capita'},
+                yaxis={'title': 'Life Expectancy'},
+                margin={'l': 40, 'b': 40, 't': 10, 'r': 10},
+                legend={'x': 0, 'y': 1},
+                hovermode='closest'
+            )
+        }
+    )
     ])
 
 
@@ -112,7 +141,7 @@ app.layout = html.Div([
     dash.dependencies.Output('slider-output-container', 'children'),
     [dash.dependencies.Input('year-slider', 'value')])
 def update_output(value):
-    return 'Return all values before year "{}"'.format(value)
+    return 'Return all the cases from {} till {}.'.format(value[0],value[1])
 
 #Start the application (debug or not)
 if __name__ == '__main__':
